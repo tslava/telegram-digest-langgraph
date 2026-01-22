@@ -1,0 +1,107 @@
+{
+  "chat_id": 123456789,
+  "window_start": "2024-01-15T00:00:00+00:00",
+  "window_end": "2024-01-15T23:59:59+00:00",
+  "messages": [
+    {
+      "message_id": 1,
+      "ts": "2024-01-15T08:00:00+00:00",
+      "author": "Alice",
+      "text": "Kickoff today!",
+      "reply_to_id": null,
+      "reactions_count": 2,
+      "has_link": false,
+      "chat_id": 123456789
+    },
+    {
+      "message_id": 2,
+      "ts": "2024-01-15T09:00:00+00:00",
+      "author": "Bob",
+      "text": "Here is the doc https://example.com/spec",
+      "reply_to_id": null,
+      "reactions_count": 1,
+      "has_link": true,
+      "chat_id": 123456789
+    },
+    {
+      "message_id": 3,
+      "ts": "2024-01-15T09:10:00+00:00",
+      "author": "Carla",
+      "text": "What is the deadline?",
+      "reply_to_id": null,
+      "reactions_count": 0,
+      "has_link": false,
+      "chat_id": 123456789
+    },
+    {
+      "message_id": 4,
+      "ts": "2024-01-15T09:12:00+00:00",
+      "author": "Dan",
+      "text": "Replying to the doc, looks good",
+      "reply_to_id": 2,
+      "reactions_count": 0,
+      "has_link": false,
+      "chat_id": 123456789
+    },
+    {
+      "message_id": 5,
+      "ts": "2024-01-15T09:20:00+00:00",
+      "author": null,
+      "text": "",
+      "reply_to_id": null,
+      "reactions_count": 0,
+      "has_link": false,
+      "chat_id": 123456789
+    },
+    {
+      "message_id": 6,
+      "ts": "2024-01-15T10:00:00+00:00",
+      "author": "Ewa",
+      "text": "Spotkanie jutro o 10:00",
+      "reply_to_id": null,
+      "reactions_count": 0,
+      "has_link": false,
+      "chat_id": 123456789
+    },
+    {
+      "message_id": 7,
+      "ts": "2024-01-15T10:15:00+00:00",
+      "author": "Fedor",
+      "text": "Сделаем релиз завтра",
+      "reply_to_id": null,
+      "reactions_count": 3,
+      "has_link": false,
+      "chat_id": 123456789
+    },
+    {
+      "message_id": 8,
+      "ts": "2024-01-15T11:00:00+00:00",
+      "author": "Alice",
+      "text": "TODO: prepare slides",
+      "reply_to_id": null,
+      "reactions_count": 0,
+      "has_link": false,
+      "chat_id": 123456789
+    },
+    {
+      "message_id": 9,
+      "ts": "2024-01-15T11:30:00+00:00",
+      "author": "Bob",
+      "text": "We decided to ship MVP.",
+      "reply_to_id": null,
+      "reactions_count": 0,
+      "has_link": false,
+      "chat_id": 123456789
+    },
+    {
+      "message_id": 10,
+      "ts": "2024-01-15T12:00:00+00:00",
+      "author": "Carla",
+      "text": "Any blockers?",
+      "reply_to_id": null,
+      "reactions_count": 1,
+      "has_link": false,
+      "chat_id": 123456789
+    }
+  ]
+}

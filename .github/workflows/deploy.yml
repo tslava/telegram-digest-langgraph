@@ -1,0 +1,73 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Upload bootstrap script
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "deploy/scripts/bootstrap_server.sh,deploy/scripts/install_app.sh"
+          target: "/tmp"
+
+      - name: Bootstrap server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            sudo bash /tmp/deploy/scripts/bootstrap_server.sh
+
+      - name: Install/update app
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            sudo bash /tmp/deploy/scripts/install_app.sh --repo https://github.com/${{ github.repository }}.git --ref main
+
+      - name: Write env file
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            sudo bash -lc 'cat > /opt/tg-digest/.env << "EOF"
+            TG_API_ID=${{ secrets.TG_API_ID }}
+            TG_API_HASH=${{ secrets.TG_API_HASH }}
+            TG_BOT_TOKEN=${{ secrets.TG_BOT_TOKEN }}
+            TG_TARGET_CHANNEL_ID=${{ secrets.TG_TARGET_CHANNEL_ID }}
+            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            OPENAI_MODEL=gpt-4o-mini
+            DB_PATH=/var/lib/tg-digest/app.db
+            TELETHON_SESSION=/var/lib/tg-digest/telethon.session
+            DRY_RUN=0
+            POST_TO_TELEGRAM=1
+            LOG_LEVEL=INFO
+            EOF'
+            sudo chmod 600 /opt/tg-digest/.env
+            sudo chown tgdigest:tgdigest /opt/tg-digest/.env
+
+      - name: Smoke test
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            sudo /opt/tg-digest/deploy/scripts/smoke_test.sh
+            systemctl is-enabled tg-digest.timer
+            systemctl is-active tg-digest.timer
