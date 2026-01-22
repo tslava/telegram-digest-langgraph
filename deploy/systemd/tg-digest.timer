@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Telegram digest daily
+
+[Timer]
+OnCalendar=*-*-* 08:00:00
+Timezone=Europe/Warsaw
+Persistent=true
+
+[Install]
+WantedBy=timers.target

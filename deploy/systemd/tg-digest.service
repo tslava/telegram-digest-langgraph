@@ -1,0 +1,15 @@
+[Unit]
+Description=Telegram Daily Digest
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=tgdigest
+Group=tgdigest
+WorkingDirectory=/opt/tg-digest
+EnvironmentFile=/opt/tg-digest/.env
+ExecStart=/opt/tg-digest/.venv/bin/tg-digest run-all
+
+[Install]
+WantedBy=multi-user.target
