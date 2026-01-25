@@ -30,9 +30,22 @@ uv run tg-digest telegram-login
 
 5) Add a chat
 
+The `add-chat` command accepts multiple identifier formats:
+
 ```bash
-uv run tg-digest add-chat --chat-id 123 --target-channel-id -100123
+# By numeric ID
+uv run tg-digest add-chat --chat-id -1001234567890 --target-channel-id -100123
+
+# By username
+uv run tg-digest add-chat --chat-id @channel_name --target-channel-id -100123
+
+# By invite link
+uv run tg-digest add-chat --chat-id "https://t.me/+fU06TpWYrmBkNjM0" --target-channel-id -100123
 ```
+
+When using a username or invite link, the command resolves the chat ID automatically and populates the title from Telegram.
+
+**Note:** For usernames and invite links, you must be logged in via `telegram-login` and have access to the chat (for private chats, you must have joined first).
 
 6) Run once
 
