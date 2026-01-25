@@ -12,6 +12,7 @@ from telethon.errors import (
     UsernameInvalidError,
     UsernameNotOccupiedError,
 )
+from telethon.tl.functions.channels import GetFullChannelRequest
 from telethon.tl.types import Channel, Chat, User
 from telethon.utils import get_display_name
 
@@ -28,6 +29,7 @@ class ResolvedChat:
 
     chat_id: int
     title: str
+    about: str | None = None
 
 
 def _require_telethon_settings(settings: Settings) -> None:
@@ -125,7 +127,17 @@ def resolve_chat_identifier(settings: Settings, identifier: str) -> ResolvedChat
                 entity = await client.get_entity(parsed)
                 chat_id = _get_entity_id(entity)
                 title = get_display_name(entity)
-                return ResolvedChat(chat_id=chat_id, title=title)
+
+                # Fetch channel description if available
+                about: str | None = None
+                if isinstance(entity, Channel):
+                    try:
+                        full_channel = await client(GetFullChannelRequest(entity))
+                        about = full_channel.full_chat.about or None
+                    except Exception:
+                        pass  # Silently ignore if we can't fetch full info
+
+                return ResolvedChat(chat_id=chat_id, title=title, about=about)
             except UsernameNotOccupiedError:
                 raise ChatResolutionError(f"Username not found: {identifier}") from None
             except UsernameInvalidError:

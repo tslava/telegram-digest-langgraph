@@ -41,6 +41,11 @@ def _parse_args() -> argparse.Namespace:
     add_chat.add_argument("--max-questions", type=int, default=7)
     add_chat.add_argument("--include-quotes", type=int, default=1)
     add_chat.add_argument("--target-channel-id", type=int, default=None)
+    add_chat.add_argument(
+        "--no-emoji",
+        action="store_true",
+        help="Skip automatic emoji selection for title",
+    )
 
     disable_chat = sub.add_parser("disable-chat", help="Disable a chat")
     disable_chat.add_argument("--chat-id", type=int, required=True)
@@ -88,6 +93,8 @@ def _cmd_init_db() -> None:
 def _cmd_add_chat(args: argparse.Namespace) -> None:
     import sys
 
+    from app.llm.emoji import select_emoji
+
     settings = get_settings()
     migrate(settings.db_path)
     target_channel_id = args.target_channel_id or settings.tg_target_channel_id
@@ -96,10 +103,14 @@ def _cmd_add_chat(args: argparse.Namespace) -> None:
 
     # Resolve chat identifier (username, link, or numeric ID)
     chat_id_input: str = args.chat_id
+    should_add_emoji = not args.no_emoji and not args.title  # Skip if user provided title
+    resolved_about: str | None = None
+
     try:
         # Try to parse as numeric ID first
         chat_id = int(chat_id_input)
         title = args.title  # Use provided title or None
+        should_add_emoji = False  # No context for numeric IDs without resolution
         if title:
             print(f"Using numeric chat ID: {chat_id}")
         else:
@@ -111,10 +122,18 @@ def _cmd_add_chat(args: argparse.Namespace) -> None:
             resolved = resolve_chat_identifier(settings, chat_id_input)
             chat_id = resolved.chat_id
             title = args.title if args.title else resolved.title
+            resolved_about = resolved.about
             print(f"Resolved to: {resolved.title} (ID: {chat_id})")
         except ChatResolutionError as e:
             print(f"Error: {e}", file=sys.stderr)
             sys.exit(1)
+
+    # Add emoji to title if applicable
+    if should_add_emoji and title:
+        emoji = select_emoji(title, resolved_about, settings)
+        if emoji:
+            title = f"{emoji} {title}"
+            print(f"Added emoji: {title}")
 
     config = ChatConfig(
         chat_id=chat_id,

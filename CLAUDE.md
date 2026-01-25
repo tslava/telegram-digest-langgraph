@@ -70,9 +70,9 @@ fetch_messages → [route_empty] → preprocess → extract_map → reduce_dedup
 - **app/db/**: SQLite layer (schema.sql, repositories.py, migrate.py)
 - **app/domain/models.py**: ChatConfig, ChatState, DigestRecord, Window, NormalizedMessage
 - **app/domain/digest_schema.py**: Pydantic models for digest output (DigestPayload, DigestItem, Evidence)
-- **app/llm/**: Prompts and LLM calls (extract.py, reduce.py, prompts.py)
+- **app/llm/**: Prompts and LLM calls (extract.py, reduce.py, prompts.py, emoji.py)
 - **app/tools/telegram_fetch.py**: Telethon client for reading messages
-- **app/tools/telegram_resolve.py**: Resolves usernames/links to numeric chat IDs
+- **app/tools/telegram_resolve.py**: Resolves usernames/links to numeric chat IDs, fetches channel descriptions
 - **app/tools/telegram_post.py**: Bot API for posting digests
 - **app/runner/**: Orchestrates single chat (run_one.py) and all chats (run_all.py)
 
@@ -123,3 +123,18 @@ Server deployment uses systemd (see `deploy/`):
 - **telegram_render.py**: Renders digest payload to HTML for Telegram
   - `_build_message_link(chat_id, message_id)`: Builds `https://t.me/c/{channel_id}/{message_id}` deep links for supergroups/channels (chat IDs with `-100` prefix); returns `None` for regular groups
   - Message IDs in evidence are rendered as clickable `<a href="...">` links when possible
+
+## Emoji Selection (app/llm/emoji.py)
+
+Auto-selects an emoji for chat titles when adding chats via `add-chat`:
+
+- **`select_emoji(title, about, settings)`**: Main entry point
+- **Stub mode** (`LLM_MODE=stub`): Keyword-based matching (80+ keywords mapped to emojis)
+- **LLM mode**: Uses OpenAI to select contextually appropriate emoji
+- **Fallback**: If LLM fails or no API key, falls back to stub mode
+- **Edge cases**:
+  - Returns empty string if title already starts with emoji
+  - Skipped when user provides `--title` flag (user has full control)
+  - Skipped for numeric chat IDs without resolution (no context)
+
+The `ResolvedChat` dataclass includes an `about` field populated via Telethon's `GetFullChannelRequest` to provide additional context for emoji selection.

@@ -43,7 +43,12 @@ uv run tg-digest add-chat --chat-id @channel_name --target-channel-id -100123
 uv run tg-digest add-chat --chat-id "https://t.me/+fU06TpWYrmBkNjM0" --target-channel-id -100123
 ```
 
-When using a username or invite link, the command resolves the chat ID automatically and populates the title from Telegram.
+When using a username or invite link, the command resolves the chat ID automatically and populates the title from Telegram. An emoji is automatically selected based on the chat's title and description (e.g., "Tech Discussion" becomes "💻 Tech Discussion").
+
+**Emoji selection options:**
+- By default, an emoji is auto-selected using LLM (or keyword matching in stub mode)
+- Use `--no-emoji` to skip automatic emoji selection
+- Use `--title "Custom Title"` to set a custom title (skips auto-emoji)
 
 **Note:** For usernames and invite links, you must be logged in via `telegram-login` and have access to the chat (for private chats, you must have joined first).
 
