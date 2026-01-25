@@ -1,0 +1,12 @@
+services:
+  tg-digest:
+    build: .
+    image: ghcr.io/${GITHUB_REPOSITORY:-telegram-digest-langgraph}:latest
+    volumes:
+      - tg-digest-data:/data
+    env_file:
+      - .env
+    # No restart policy - this is a batch job triggered by systemd timer
+
+volumes:
+  tg-digest-data:

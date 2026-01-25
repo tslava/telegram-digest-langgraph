@@ -1,0 +1,19 @@
+[Unit]
+Description=Telegram Daily Digest (Docker)
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/tg-digest/env
+ExecStartPre=-/usr/bin/docker pull ${DOCKER_IMAGE:-ghcr.io/ts/telegram-digest-langgraph:latest}
+ExecStart=/usr/bin/docker run --rm \
+    --name tg-digest-run \
+    --env-file /etc/tg-digest/env \
+    -v tg-digest-data:/data \
+    ${DOCKER_IMAGE:-ghcr.io/ts/telegram-digest-langgraph:latest} \
+    run-all
+
+[Install]
+WantedBy=multi-user.target

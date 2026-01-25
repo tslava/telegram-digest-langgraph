@@ -1,0 +1,45 @@
+# Git
+.git
+.gitignore
+
+# Python
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info
+.eggs
+
+# Environment and secrets
+.env
+.env.*
+*.session
+
+# Development and testing
+tests/
+fixtures/
+.pytest_cache
+.mypy_cache
+.ruff_cache
+
+# Deployment scripts (not needed in container)
+deploy/
+
+# Database files
+*.db
+*.db-journal
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Documentation
+*.md
+!README.md
+
+# Local directories
+.local/
