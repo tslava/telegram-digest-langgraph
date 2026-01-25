@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Daily Telegram chat digest generator using LangGraph and Telethon. Reads messages from configured chats, extracts structured highlights (decisions, todos, questions, links, events, risks) via an LLM workflow, and posts summaries to a private Telegram channel. Deployed via systemd timer on Linux servers.
+Daily Telegram chat digest generator using LangGraph and Telethon. Reads messages from configured chats, extracts structured highlights (decisions, todos, questions, links, events, risks) via an LLM workflow, and posts summaries to a private Telegram channel. Deployed via Docker + systemd timer on Linux servers (or native deployment as legacy option).
 
 ## Build & Development Commands
 
@@ -38,6 +38,12 @@ ruff check app/ tests/
 ruff format app/ tests/
 mypy app/
 pytest
+
+# Docker commands
+docker compose build                                    # Build image locally
+docker compose run --rm tg-digest init-db              # Initialize database
+docker compose run --rm tg-digest telegram-login       # Interactive Telegram login
+docker compose run --rm tg-digest run-all --dry-run 1  # Run digest (dry run)
 ```
 
 ## Architecture
@@ -98,18 +104,39 @@ Required:
 
 Optional:
 - `OPENAI_MODEL`: Model name (default: gpt-4o-mini)
-- `DB_PATH`: SQLite path (default: ./.local/app.db)
-- `TELETHON_SESSION`: Session file path (default: ./.local/telethon.session)
+- `DB_PATH`: SQLite path (default: ./.local/app.db, Docker: /data/app.db)
+- `TELETHON_SESSION`: Session file path (default: ./.local/telethon.session, Docker: /data/telethon.session)
 - `DRY_RUN`: 1 to skip posting
 - `LLM_MODE`: openai or stub
+- `DOCKER_IMAGE`: Image path for systemd service (default: ghcr.io/{owner}/telegram-digest-langgraph:latest)
 
 ## Deployment
 
-Server deployment uses systemd (see `deploy/`):
+### Docker Deployment (default)
+
+Server deployment uses Docker + systemd timer (see `deploy/`):
+- **bootstrap_server.sh**: Creates user, installs Docker (when `DEPLOY_MODE=docker`)
+- **tg-digest-docker.service**: Runs digest via `docker run` with env file and volume
+- **tg-digest.timer**: Triggers daily at 08:00 Warsaw time
+- GitHub Actions builds multi-platform images (amd64/arm64) and pushes to GHCR
+
+**Key files:**
+- `Dockerfile`: Multi-stage build with uv (builder) + python:3.12-slim (runtime)
+- `docker-compose.yml`: Local development with named volume `tg-digest-data`
+- `.dockerignore`: Excludes .git, .venv, tests/, fixtures/, deploy/
+- `.github/workflows/docker-build.yml`: Builds and pushes to GHCR on push to main/tags
+
+**Data persistence:**
+- Container mounts `/data` volume for SQLite database and Telethon session
+- Server uses Docker named volume `tg-digest-data`
+- Env file stored at `/etc/tg-digest/env`
+
+### Native Deployment (legacy)
+
+Set `DEPLOY_MODE=native` to use the legacy deployment:
 - **bootstrap_server.sh**: Creates user, installs Python/uv
 - **install_app.sh**: Clones repo, installs deps, enables timer
 - **smoke_test.sh**: Verifies app runs
-- GitHub Actions auto-deploys on push to main
 
 ## Code Conventions
 
