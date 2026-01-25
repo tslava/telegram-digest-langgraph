@@ -140,3 +140,4 @@ Maintenance:
 
 - Empty chats post a "No messages" digest for the window.
 - `LLM_MODE=stub` runs a deterministic, non-LLM extractor for fixtures and tests.
+- Message IDs in digests are clickable links (e.g., `#123`) that navigate to the original message in Telegram. This works for supergroups and channels (chat IDs with `-100` prefix).
