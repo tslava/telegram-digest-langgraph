@@ -18,8 +18,10 @@ uv run tg-digest init-db
 # Telegram login (interactive, one-time per machine)
 uv run tg-digest telegram-login
 
-# Manage chats
-uv run tg-digest add-chat --chat-id 123 --target-channel-id -100456
+# Manage chats (--chat-id accepts numeric ID, @username, or t.me link)
+uv run tg-digest add-chat --chat-id @channel_name --target-channel-id -100456
+uv run tg-digest add-chat --chat-id "https://t.me/+inviteHash" --target-channel-id -100456
+uv run tg-digest add-chat --chat-id -1001234567890 --target-channel-id -100456
 uv run tg-digest list-chats
 uv run tg-digest disable-chat --chat-id 123
 
@@ -70,6 +72,7 @@ fetch_messages → [route_empty] → preprocess → extract_map → reduce_dedup
 - **app/domain/digest_schema.py**: Pydantic models for digest output (DigestPayload, DigestItem, Evidence)
 - **app/llm/**: Prompts and LLM calls (extract.py, reduce.py, prompts.py)
 - **app/tools/telegram_fetch.py**: Telethon client for reading messages
+- **app/tools/telegram_resolve.py**: Resolves usernames/links to numeric chat IDs
 - **app/tools/telegram_post.py**: Bot API for posting digests
 - **app/runner/**: Orchestrates single chat (run_one.py) and all chats (run_all.py)
 

@@ -14,6 +14,7 @@ from app.runner.run_all import run_all
 from app.runner.run_one import run_one
 from app.tools.storage import load_fixture, save_fixture
 from app.tools.telegram_fetch import fetch_messages, telethon_login
+from app.tools.telegram_resolve import ChatResolutionError, resolve_chat_identifier
 
 
 def _parse_args() -> argparse.Namespace:
@@ -23,7 +24,12 @@ def _parse_args() -> argparse.Namespace:
     sub.add_parser("init-db", help="Initialize the SQLite DB")
 
     add_chat = sub.add_parser("add-chat", help="Add or update a chat config")
-    add_chat.add_argument("--chat-id", type=int, required=True)
+    add_chat.add_argument(
+        "--chat-id",
+        type=str,
+        required=True,
+        help="Numeric ID, username (@name), or invite link",
+    )
     add_chat.add_argument("--title", type=str, default=None)
     add_chat.add_argument("--profile", type=str, default="work")
     add_chat.add_argument("--language", type=str, default="ru")
@@ -80,16 +86,40 @@ def _cmd_init_db() -> None:
 
 
 def _cmd_add_chat(args: argparse.Namespace) -> None:
+    import sys
+
     settings = get_settings()
     migrate(settings.db_path)
     target_channel_id = args.target_channel_id or settings.tg_target_channel_id
     if not target_channel_id:
         raise ValueError("target-channel-id or TG_TARGET_CHANNEL_ID is required")
 
+    # Resolve chat identifier (username, link, or numeric ID)
+    chat_id_input: str = args.chat_id
+    try:
+        # Try to parse as numeric ID first
+        chat_id = int(chat_id_input)
+        title = args.title  # Use provided title or None
+        if title:
+            print(f"Using numeric chat ID: {chat_id}")
+        else:
+            print(f"Using numeric chat ID: {chat_id} (no title provided)")
+    except ValueError:
+        # Not a numeric ID, need to resolve via Telegram
+        print(f"Resolving '{chat_id_input}'...")
+        try:
+            resolved = resolve_chat_identifier(settings, chat_id_input)
+            chat_id = resolved.chat_id
+            title = args.title if args.title else resolved.title
+            print(f"Resolved to: {resolved.title} (ID: {chat_id})")
+        except ChatResolutionError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            sys.exit(1)
+
     config = ChatConfig(
-        chat_id=args.chat_id,
+        chat_id=chat_id,
         enabled=True,
-        title=args.title,
+        title=title,
         profile=args.profile,
         language=args.language,
         window_mode=args.window_mode,
@@ -106,6 +136,7 @@ def _cmd_add_chat(args: argparse.Namespace) -> None:
     with conn:
         upsert_chat_config(conn, config)
     conn.close()
+    print(f"Chat config saved: {config.chat_id} ({config.title or 'no title'})")
 
 
 def _cmd_disable_chat(args: argparse.Namespace) -> None:
