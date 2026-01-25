@@ -2,7 +2,41 @@
 
 Daily Telegram chat digest generator using LangGraph and Telethon. It reads messages from configured chats, extracts structured highlights with an LLM workflow, and posts summaries to a private Telegram channel.
 
-## Quick start (local)
+## Quick start (Docker)
+
+1) Configure env
+
+```bash
+cp .env_example .env
+# Edit .env with your Telegram and OpenAI credentials
+```
+
+2) Build and init DB
+
+```bash
+docker compose build
+docker compose run --rm tg-digest init-db
+```
+
+3) Login to Telegram (interactive)
+
+```bash
+docker compose run --rm tg-digest telegram-login
+```
+
+4) Add a chat
+
+```bash
+docker compose run --rm tg-digest add-chat --chat-id @channel_name --target-channel-id -100123
+```
+
+5) Run digest
+
+```bash
+docker compose run --rm tg-digest run-all --dry-run 1
+```
+
+## Quick start (native/local)
 
 1) Install deps
 
@@ -84,21 +118,41 @@ Convenience wrappers live in `scripts/`:
 
 ## Deployment
 
-### Bootstrap server
+### Docker deployment (recommended)
+
+The CI/CD pipeline automatically builds and pushes Docker images to GitHub Container Registry (GHCR) on every push to `main`.
+
+**Server setup:**
 
 ```bash
-sudo deploy/scripts/bootstrap_server.sh
+# Bootstrap server with Docker
+export DEPLOY_MODE=docker
+sudo -E deploy/scripts/bootstrap_server.sh
 ```
 
-### Install/update app
+**Manual run via Docker:**
 
 ```bash
+docker run --rm \
+  --env-file /etc/tg-digest/env \
+  -v tg-digest-data:/data \
+  ghcr.io/<owner>/telegram-digest-langgraph:latest \
+  run-all
+```
+
+**Systemd timer:** The `tg-digest.timer` triggers daily at 08:00 Warsaw time. The Docker-aware service (`tg-digest-docker.service`) pulls the latest image before each run.
+
+### Native deployment (legacy)
+
+```bash
+# Bootstrap server (native mode)
+export DEPLOY_MODE=native
+sudo -E deploy/scripts/bootstrap_server.sh
+
+# Install/update app
 sudo deploy/scripts/install_app.sh --repo <git-url> --ref main
-```
 
-### Smoke test
-
-```bash
+# Smoke test
 sudo deploy/scripts/smoke_test.sh
 ```
 
@@ -120,11 +174,15 @@ See `.env.example` for the full list. Required for production:
 Optional/common:
 
 - `OPENAI_MODEL`: LLM model name (default `gpt-4o-mini`).
-- `DB_PATH`: SQLite file path (local default `./.local/app.db`).
-- `TELETHON_SESSION`: Telethon session file path (local default `./.local/telethon.session`).
+- `DB_PATH`: SQLite file path (local default `./.local/app.db`, Docker default `/data/app.db`).
+- `TELETHON_SESSION`: Telethon session file path (local default `./.local/telethon.session`, Docker default `/data/telethon.session`).
 - `DRY_RUN`: `1` to skip posting to Telegram.
 - `POST_TO_TELEGRAM`: `1` to allow posting, `0` to disable.
 - `LOG_LEVEL`: e.g. `INFO`, `DEBUG`.
+
+Docker-specific:
+
+- `DOCKER_IMAGE`: Full image path for systemd service (default `ghcr.io/<owner>/telegram-digest-langgraph:latest`).
 
 ## GitHub Actions CI/CD setup and maintenance
 
