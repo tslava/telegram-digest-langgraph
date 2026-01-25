@@ -58,7 +58,7 @@ fetch_messages → [route_empty] → preprocess → extract_map → reduce_dedup
 - **extract_map**: LLM call per chunk (or stub mode)
 - **reduce_dedupe**: Merges and deduplicates across chunks
 - **validate**: Pydantic schema validation with one retry
-- **format**: HTML output for Telegram
+- **format**: HTML output for Telegram (includes clickable message links)
 - **compute_hash**: SHA256 for deduplication
 - **publish**: Posts to channel (skips if hash matches last run)
 - **persist**: Saves digest record and updates cursor
@@ -117,3 +117,9 @@ Server deployment uses systemd (see `deploy/`):
 - Type hints required (mypy)
 - LangGraph state uses TypedDict (not dataclasses)
 - Async only for Telethon login; rest is sync
+
+## Formatters (app/formatters/)
+
+- **telegram_render.py**: Renders digest payload to HTML for Telegram
+  - `_build_message_link(chat_id, message_id)`: Builds `https://t.me/c/{channel_id}/{message_id}` deep links for supergroups/channels (chat IDs with `-100` prefix); returns `None` for regular groups
+  - Message IDs in evidence are rendered as clickable `<a href="...">` links when possible
