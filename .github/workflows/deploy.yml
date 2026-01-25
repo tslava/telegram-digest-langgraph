@@ -4,10 +4,20 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  workflow_run:
+    workflows: ["Docker Build"]
+    types:
+      - completed
+    branches: [main]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Only run if triggered manually, by push, or if Docker Build succeeded
+    if: |
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     steps:
       - uses: actions/checkout@v4
 
@@ -17,26 +27,18 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "deploy/scripts/bootstrap_server.sh,deploy/scripts/install_app.sh"
+          source: "deploy/scripts/bootstrap_server.sh,deploy/systemd/tg-digest-docker.service,deploy/systemd/tg-digest.timer"
           target: "/tmp"
 
-      - name: Bootstrap server
+      - name: Bootstrap server (Docker)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            sudo bash /tmp/deploy/scripts/bootstrap_server.sh
-
-      - name: Install/update app
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            sudo bash /tmp/deploy/scripts/install_app.sh --repo https://github.com/${{ github.repository }}.git --ref main
+            export DEPLOY_MODE=docker
+            sudo -E bash /tmp/deploy/scripts/bootstrap_server.sh
 
       - name: Write env file
         uses: appleboy/ssh-action@v1.0.3
@@ -45,21 +47,56 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            sudo bash -lc 'cat > /opt/tg-digest/.env << "EOF"
+            sudo bash -lc 'cat > /etc/tg-digest/env << "EOF"
             TG_API_ID=${{ secrets.TG_API_ID }}
             TG_API_HASH=${{ secrets.TG_API_HASH }}
             TG_BOT_TOKEN=${{ secrets.TG_BOT_TOKEN }}
             TG_TARGET_CHANNEL_ID=${{ secrets.TG_TARGET_CHANNEL_ID }}
             OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
             OPENAI_MODEL=gpt-4o-mini
-            DB_PATH=/var/lib/tg-digest/app.db
-            TELETHON_SESSION=/var/lib/tg-digest/telethon.session
+            DB_PATH=/data/app.db
+            TELETHON_SESSION=/data/telethon.session
             DRY_RUN=0
             POST_TO_TELEGRAM=1
             LOG_LEVEL=INFO
+            DOCKER_IMAGE=ghcr.io/${{ github.repository }}:latest
             EOF'
-            sudo chmod 600 /opt/tg-digest/.env
-            sudo chown tgdigest:tgdigest /opt/tg-digest/.env
+            sudo chmod 600 /etc/tg-digest/env
+            sudo chown root:root /etc/tg-digest/env
+
+      - name: Pull Docker image
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            docker pull ghcr.io/${{ github.repository }}:latest
+
+      - name: Install systemd units
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            sudo cp /tmp/deploy/systemd/tg-digest-docker.service /etc/systemd/system/tg-digest.service
+            sudo cp /tmp/deploy/systemd/tg-digest.timer /etc/systemd/system/tg-digest.timer
+            sudo systemctl daemon-reload
+            sudo systemctl enable --now tg-digest.timer
+
+      - name: Initialize database
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            docker run --rm \
+              --env-file /etc/tg-digest/env \
+              -v tg-digest-data:/data \
+              ghcr.io/${{ github.repository }}:latest \
+              init-db
 
       - name: Smoke test
         uses: appleboy/ssh-action@v1.0.3
@@ -68,6 +105,12 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            sudo /opt/tg-digest/deploy/scripts/smoke_test.sh
+            docker run --rm \
+              --env-file /etc/tg-digest/env \
+              -v tg-digest-data:/data \
+              -e DRY_RUN=1 \
+              -e POST_TO_TELEGRAM=0 \
+              ghcr.io/${{ github.repository }}:latest \
+              run-all
             systemctl is-enabled tg-digest.timer
             systemctl is-active tg-digest.timer
