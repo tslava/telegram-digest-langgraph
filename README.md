@@ -1,6 +1,19 @@
 # telegram-digest-langgraph
 
-Daily Telegram chat digest generator using LangGraph and Telethon. It reads messages from configured chats, extracts structured highlights with an LLM workflow, and posts summaries to a private Telegram channel.
+**Daily digests of busy Telegram chats.** A LangGraph pipeline reads the day's messages, pulls out the highlights with an LLM and posts a short summary to a channel. Every item links back to the original message.
+
+```mermaid
+flowchart LR
+  fetch[fetch_messages] -->|messages| pre[preprocess<br/>chunking] --> map[extract_map<br/>LLM per chunk] --> red[reduce_dedupe] --> val[validate] --> fmt[format]
+  fetch -->|empty window| empty[empty_digest] --> fmt
+  fmt --> hash[compute_hash] --> pub[publish] --> persist[persist<br/>SQLite]
+```
+
+- **Map-reduce extraction:** each chunk of messages is summarised on its own, then results are merged and de-duplicated.
+- **No double posts:** the digest is hashed, and an identical digest for the same chat is not published again.
+- **Testable without an API key:** `LLM_MODE=stub` swaps the LLM for a deterministic extractor used by fixtures and tests.
+
+**Stack:** Python 3.12 · LangGraph · Telethon · OpenAI (`gpt-4o-mini` by default) · SQLite · Docker · GitHub Actions · uv
 
 ## Quick start (Docker)
 
@@ -204,3 +217,7 @@ Maintenance:
 - Empty chats post a "No messages" digest for the window.
 - `LLM_MODE=stub` runs a deterministic, non-LLM extractor for fixtures and tests.
 - Message IDs in digests are clickable links (e.g., `#123`) that navigate to the original message in Telegram. This works for supergroups and channels (chat IDs with `-100` prefix).
+
+---
+
+Built by [Wiaczeslaw Cyunczyk](https://cyunczyk.dev)
