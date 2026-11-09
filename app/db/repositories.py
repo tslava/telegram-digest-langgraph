@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from app.domain.models import ChatConfig, ChatState, DigestRecord
 
 
 def _utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _row_to_chat_config(row) -> ChatConfig:
@@ -40,7 +39,7 @@ def list_chats(conn) -> list[ChatConfig]:
     return [_row_to_chat_config(row) for row in rows]
 
 
-def get_chat_config(conn, chat_id: int) -> Optional[ChatConfig]:
+def get_chat_config(conn, chat_id: int) -> ChatConfig | None:
     row = conn.execute(
         "SELECT * FROM chat_configs WHERE chat_id = ?", (chat_id,)
     ).fetchone()

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional
-
 import httpx
 
 from app.config import Settings
@@ -11,7 +9,7 @@ class TelegramPostError(RuntimeError):
     pass
 
 
-def post_message(settings: Settings, text: str, channel_id: Optional[int] = None) -> Optional[int]:
+def post_message(settings: Settings, text: str, channel_id: int | None = None) -> int | None:
     if settings.dry_run or not settings.post_to_telegram:
         return None
 

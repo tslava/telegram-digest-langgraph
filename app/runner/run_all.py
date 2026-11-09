@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from app.config import get_settings
@@ -29,7 +29,7 @@ def _compute_window(config) -> Window:
 def _persist_failure(chat_id: int, error: str) -> None:
     settings = get_settings()
     migrate(settings.db_path)
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
     conn = get_connection(settings.db_path)
     existing = conn.execute(
         "SELECT last_message_id, last_digest_hash FROM chat_state WHERE chat_id = ?",

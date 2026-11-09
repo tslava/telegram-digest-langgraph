@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from app.config import get_settings
@@ -185,7 +185,7 @@ def _cmd_telegram_login() -> None:
 
 def _cmd_record_fixture(args: argparse.Namespace) -> None:
     settings = get_settings()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     window_start = now - timedelta(hours=args.hours)
     window_end = now
 
@@ -219,12 +219,12 @@ def _cmd_run_from_fixture(args: argparse.Namespace) -> None:
     window_start = (
         datetime.fromisoformat(fixture.window_start)
         if fixture.window_start
-        else datetime.now(timezone.utc) - timedelta(hours=24)
+        else datetime.now(UTC) - timedelta(hours=24)
     )
     window_end = (
         datetime.fromisoformat(fixture.window_end)
         if fixture.window_end
-        else datetime.now(timezone.utc)
+        else datetime.now(UTC)
     )
     window = Window(start=window_start, end=window_end)
 

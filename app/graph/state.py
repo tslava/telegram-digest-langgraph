@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Optional, TypedDict
+from typing import Any, TypedDict
 
 from app.domain.models import ChatConfig, NormalizedMessage, Window
 
@@ -8,8 +8,8 @@ from app.domain.models import ChatConfig, NormalizedMessage, Window
 class DigestState(TypedDict, total=False):
     config: ChatConfig
     window: Window
-    last_message_id: Optional[int]
-    last_digest_hash: Optional[str]
+    last_message_id: int | None
+    last_digest_hash: str | None
     raw_messages: list[NormalizedMessage]
     fixture_messages: list[NormalizedMessage]
     chunks: list[list[NormalizedMessage]]
@@ -17,9 +17,9 @@ class DigestState(TypedDict, total=False):
     digest_structured: dict[str, Any]
     final_text: str
     digest_hash: str
-    posted_message_id: Optional[int]
+    posted_message_id: int | None
     status: str
-    error: Optional[str]
+    error: str | None
     metrics: dict[str, Any]
     dry_run: bool
     post_to_telegram: bool

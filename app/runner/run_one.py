@@ -10,6 +10,7 @@ from app.db.sqlite import get_connection
 from app.domain.models import Window
 from app.graph.build import build_graph
 
+
 def _compute_window(config) -> Window:
     tz = ZoneInfo(config.timezone)
     now = datetime.now(tz)

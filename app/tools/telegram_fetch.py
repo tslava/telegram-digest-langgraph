@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime
-from typing import Optional
 
 from telethon import TelegramClient
 from telethon.tl.types import Message
@@ -12,7 +11,7 @@ from app.config import Settings
 from app.domain.models import NormalizedMessage
 
 
-def _normalize_message(message: Message, chat_id: int) -> Optional[NormalizedMessage]:
+def _normalize_message(message: Message, chat_id: int) -> NormalizedMessage | None:
     text = message.message or ""
     if not text.strip():
         return None
@@ -61,7 +60,7 @@ def fetch_messages(
     chat_id: int,
     window_start: datetime,
     window_end: datetime,
-    after_message_id: Optional[int] = None,
+    after_message_id: int | None = None,
 ) -> list[NormalizedMessage]:
     _require_telethon_settings(settings)
 

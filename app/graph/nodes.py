@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from pydantic import ValidationError
@@ -191,7 +191,7 @@ def persist_node(state: dict[str, Any]) -> dict[str, Any]:
     final_text = state.get("final_text", "")
     digest_json = json.dumps(digest_structured, ensure_ascii=False)
 
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
     record = DigestRecord(
         chat_id=config.chat_id,
         window_start=window.start.isoformat(),

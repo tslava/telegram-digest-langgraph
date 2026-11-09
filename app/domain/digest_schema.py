@@ -1,38 +1,36 @@
 from __future__ import annotations
 
-from typing import Optional
-
 from pydantic import BaseModel, Field
 
 
 class Evidence(BaseModel):
-    message_id: Optional[int] = None
-    author: Optional[str] = None
-    ts: Optional[str] = None
+    message_id: int | None = None
+    author: str | None = None
+    ts: str | None = None
 
 
 class DigestItem(BaseModel):
     title: str
-    details: Optional[str] = None
+    details: str | None = None
     evidence: list[Evidence] = Field(default_factory=list)
 
 
 class TodoItem(BaseModel):
     task: str
-    owner: Optional[str] = None
-    due: Optional[str] = None
+    owner: str | None = None
+    due: str | None = None
     evidence: list[Evidence] = Field(default_factory=list)
 
 
 class LinkItem(BaseModel):
     url: str
-    title: Optional[str] = None
+    title: str | None = None
     evidence: list[Evidence] = Field(default_factory=list)
 
 
 class EventItem(BaseModel):
     name: str
-    when: Optional[str] = None
+    when: str | None = None
     evidence: list[Evidence] = Field(default_factory=list)
 
 

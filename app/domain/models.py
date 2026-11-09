@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -9,7 +8,7 @@ from pydantic import BaseModel, Field
 class ChatConfig(BaseModel):
     chat_id: int
     enabled: bool = True
-    title: Optional[str] = None
+    title: str | None = None
     profile: str = "work"
     language: str = "ru"
     window_mode: str = "calendar_day"
@@ -24,11 +23,11 @@ class ChatConfig(BaseModel):
 
 class ChatState(BaseModel):
     chat_id: int
-    last_message_id: Optional[int] = None
-    last_run_at: Optional[str] = None
-    last_status: Optional[str] = None
-    last_error: Optional[str] = None
-    last_digest_hash: Optional[str] = None
+    last_message_id: int | None = None
+    last_run_at: str | None = None
+    last_status: str | None = None
+    last_error: str | None = None
+    last_digest_hash: str | None = None
 
 
 class DigestRecord(BaseModel):
@@ -38,8 +37,8 @@ class DigestRecord(BaseModel):
     messages_count: int
     payload_json: str
     final_text: str
-    posted_channel_id: Optional[int]
-    posted_message_id: Optional[int]
+    posted_channel_id: int | None
+    posted_message_id: int | None
     created_at: str
 
 
@@ -51,16 +50,16 @@ class Window(BaseModel):
 class NormalizedMessage(BaseModel):
     message_id: int
     ts: str
-    author: Optional[str] = None
+    author: str | None = None
     text: str
-    reply_to_id: Optional[int] = None
+    reply_to_id: int | None = None
     reactions_count: int = 0
     has_link: bool = False
-    chat_id: Optional[int] = None
+    chat_id: int | None = None
 
 
 class FixturePayload(BaseModel):
-    chat_id: Optional[int] = None
-    window_start: Optional[str] = None
-    window_end: Optional[str] = None
+    chat_id: int | None = None
+    window_start: str | None = None
+    window_end: str | None = None
     messages: list[NormalizedMessage] = Field(default_factory=list)

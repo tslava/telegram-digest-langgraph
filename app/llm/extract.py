@@ -59,7 +59,7 @@ def _stub_extract(messages: list[NormalizedMessage], window: Window) -> dict[str
 
 def _extract_first_link(text: str) -> str:
     for token in text.split():
-        if token.startswith("http://") or token.startswith("https://"):
+        if token.startswith(("http://", "https://")):
             return token
     return ""
 

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Optional
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -11,14 +10,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    tg_api_id: Optional[int] = Field(default=None, validation_alias="TG_API_ID")
-    tg_api_hash: Optional[str] = Field(default=None, validation_alias="TG_API_HASH")
-    tg_bot_token: Optional[str] = Field(default=None, validation_alias="TG_BOT_TOKEN")
-    tg_target_channel_id: Optional[int] = Field(
+    tg_api_id: int | None = Field(default=None, validation_alias="TG_API_ID")
+    tg_api_hash: str | None = Field(default=None, validation_alias="TG_API_HASH")
+    tg_bot_token: str | None = Field(default=None, validation_alias="TG_BOT_TOKEN")
+    tg_target_channel_id: int | None = Field(
         default=None, validation_alias="TG_TARGET_CHANNEL_ID"
     )
 
-    openai_api_key: Optional[str] = Field(default=None, validation_alias="OPENAI_API_KEY")
+    openai_api_key: str | None = Field(default=None, validation_alias="OPENAI_API_KEY")
     openai_model: str = Field(default="gpt-4o-mini", validation_alias="OPENAI_MODEL")
 
     db_path: Path = Field(default=Path("./.local/app.db"), validation_alias="DB_PATH")
